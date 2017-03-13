@@ -1,4 +1,6 @@
+#! /usr/bin/env ruby -w
 
+require 'json'
 
 def train(data, min, max)
   learningRate = 0.1
@@ -35,17 +37,6 @@ def train(data, min, max)
   return theta0, theta1, n, min, max
 end
 
-def parse
-  csv = open("data.csv", "r").read
-  csv = csv.split("\n")
-  list_arg = []
-  (1..csv.count - 1).each do |x|
-    arg = csv[x].split(',')
-    list_arg << [arg[0].to_f, arg[1].to_f]
-  end
-  return list_arg
-end
-
 def scale(data)
   data = data.sort { |a, b| a[0] <=> b[0] }
   min = data[0][0]
@@ -57,10 +48,26 @@ def scale(data)
   return new_data, min, max
 end
 
-def main(args = {})
+def main(args = [])
+  (0..args.count - 1).each do |n|
+     puts args[n]
+  end
   data, min, max = scale(parse)
-  theta = train(data, min, max)
-  puts theta.to_s
+  thetas = train(data, min, max)
+  puts thetas
+  file = open("result.txt", "w+")
+  file << thetas.join(';')
 end
 
-main
+def parse
+  csv = open("data.csv", "r").read
+  csv = csv.split("\n")
+  list_arg = []
+  (1..csv.count - 1).each do |x|
+    arg = csv[x].split(',')
+    list_arg << [arg[0].to_f, arg[1].to_f]
+  end
+  return list_arg
+end
+
+main(ARGV)
