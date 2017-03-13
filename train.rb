@@ -18,7 +18,7 @@ def train(data, min, max)
       end
       cost1 *= (1.0 / (2.0 * m))
       cost0 -= cost1
-      if (cost0 < (cost1 / (10000000 / learningRate)))
+      if (cost0 < (cost1 / (100000000 / learningRate)))
         break
       end
     end
@@ -54,9 +54,9 @@ def main(args = [])
   end
   data, min, max = scale(parse)
   thetas = train(data, min, max)
-  puts thetas
   file = open("result.txt", "w+")
   file << thetas.join(';')
+  puts "Regression works in #{thetas[2]} iterations."
 end
 
 def parse
