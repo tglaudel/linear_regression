@@ -2,7 +2,9 @@
 
 def estimate(arg = [])
   if arg.count < 1
-    return puts "No argument"
+    return puts "No argument, pliz feed me ! With km in 1st arg"
+  elsif arg.count > 1
+    return puts "NO ! JUST ONE ARG !"
   else
     arg = Float(arg[0]) rescue nil
     if arg.nil?
@@ -13,7 +15,7 @@ def estimate(arg = [])
     str = open('result.txt').read
     str = str.split(';')
   rescue
-    puts "Pliz train before execute estimate.rb"
+    puts "Pliz train before execute estimate.rb, or i say 0 !! 0 Euro for your car !"
     return
   end
   theta0 = str[0].to_f
@@ -24,9 +26,9 @@ def estimate(arg = [])
   scale = (arg - min) / (max - min)
   result = theta0 + (theta1 * scale)
   if result < 0
-    puts "#{result} -> yes, your car suck"
+    puts "#{result} euro for #{arg} -> yes, your car suck"
   else
-    puts result
+    puts "#{result.to_i} euro for #{arg} km"
   end
 end
 

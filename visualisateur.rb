@@ -14,13 +14,29 @@ class Tutorial < Gosu::Window
   PUMPKIN = 0xffd35400
   YELLOW = 0xfff1c40f
   BLANC = 0xffffffff
+  CURSOR = 'wwatkins.png'
 
-  def initialize
+  def initialize(args = [])
     super 1080, 720
+    @speed = 20
+    if args.count > 0
+      if args[0] == "-v"
+        @speed = args[1].to_i if args[1] && args[1].to_i != nil && args[1].to_i > 0
+      else
+        return puts "illegal option"
+      end
+    end
     self.caption = "Linear Regression - visualisateur"
     @font = Gosu::Font.new(self, "Arial", 18)
+    @cursor = Gosu::Image.new(self, CURSOR)
     @args = take_data
-    @theta0, @theta1, @min, @max = determine_args
+    @visualisateur = 0
+    @file_visu = []
+    @count = 0
+    @theta0, @theta1, @min, @max, @n = determine_args
+    @n = 0 if !@n
+    @count = 0
+    @index = 0
   end
 
   def update
@@ -28,14 +44,21 @@ class Tutorial < Gosu::Window
   end
 
   def draw
-    draw_line(ORIGINE_X, ORIGINE_Y + 20, YELLOW, ORIGINE_X, ORIGINE_Y - SIZE_Y, YELLOW, 1)
+    @count += 1
+    determine_thetas if @count % @speed == 0 && @visualisateur == 1
+    draw_line(ORIGINE_X, ORIGINE_Y + 20, YELLOW,
+              ORIGINE_X, ORIGINE_Y - SIZE_Y, YELLOW, 1)
     draw_line(20, ORIGINE_Y, YELLOW, SIZE_X + 100, ORIGINE_Y, YELLOW, 1)
     @font.draw("Price (euro)", ORIGINE_X + 10, 10, 1, 1, 1, YELLOW)
-    @font.draw("Mileage (km)", ORIGINE_X + SIZE_X + 30, ORIGINE_Y - 20, 1, 1, 1, YELLOW)
+    @font.draw("Mileage (km)", ORIGINE_X + SIZE_X + 30,
+                ORIGINE_Y - 20, 1, 1, 1, YELLOW)
+    @font.draw("Iteration = #{@n}", ORIGINE_X + SIZE_X - 30,
+                ORIGINE_Y - SIZE_Y, 1, 1, 1, YELLOW)
     draw_y
     draw_x
     draw_point
     draw_affine if @theta0 && @theta1 && @min && @max
+    @cursor.draw self.mouse_x, self.mouse_y, 3, 1, 1
   end
 
   def draw_y
@@ -53,8 +76,10 @@ class Tutorial < Gosu::Window
     value_in_space = @args[:max_x].to_f / (PREC_X - 1)
     space = SIZE_X / (PREC_X - 1)
     for i in 0..PREC_X - 1
-      draw_line(ORIGINE_X + i * space, ORIGINE_Y + 5 , YELLOW, ORIGINE_X + i * space, ORIGINE_Y - 5, YELLOW, 1)
-      @font.draw("#{(i * value_in_space).to_i}",ORIGINE_X + i * space - 25, ORIGINE_Y + 10, 1, 1, 1, YELLOW)
+      draw_line(ORIGINE_X + i * space, ORIGINE_Y + 5 , YELLOW,
+                ORIGINE_X + i * space, ORIGINE_Y - 5, YELLOW, 1)
+      @font.draw("#{(i * value_in_space).to_i}",ORIGINE_X + i * space - 25,
+                  ORIGINE_Y + 10, 1, 1, 1, YELLOW)
     end
   end
 
@@ -67,8 +92,10 @@ class Tutorial < Gosu::Window
                 ORIGINE_X + x + 2, ORIGINE_Y - y + 2, BLUE,
                 ORIGINE_X + x + 2, ORIGINE_Y - y - 2, BLUE,
                 1)
-      draw_line(ORIGINE_X + x, ORIGINE_Y - y, MIDNIGHT, ORIGINE_X, ORIGINE_Y - y, MIDNIGHT, 0)
-      draw_line(ORIGINE_X + x, ORIGINE_Y - y, MIDNIGHT, ORIGINE_X + x, ORIGINE_Y, MIDNIGHT, 0)
+      draw_line(ORIGINE_X + x, ORIGINE_Y - y, MIDNIGHT,
+                ORIGINE_X, ORIGINE_Y - y, MIDNIGHT, 0)
+      draw_line(ORIGINE_X + x, ORIGINE_Y - y, MIDNIGHT,
+                ORIGINE_X + x, ORIGINE_Y, MIDNIGHT, 0)
     end
   end
 
@@ -79,8 +106,8 @@ class Tutorial < Gosu::Window
     y_min = (@theta0 + @theta1 * scale_min)/ @args[:max_y].to_f * SIZE_Y
     x_max = 250000 / @args[:max_x].to_f * SIZE_X
     y_max = (@theta0 + @theta1 * scale_max) /@args[:max_y].to_f * SIZE_Y
-    # puts ORIGINE_X + x_min, ORIGINE_Y - y_min,ORIGINE_X + x_max,ORIGINE_Y - y_max
-    draw_line(ORIGINE_X + x_min, ORIGINE_Y - y_min, PUMPKIN, ORIGINE_X + x_max, ORIGINE_Y - y_max, PUMPKIN, 2)
+    draw_line(ORIGINE_X + x_min, ORIGINE_Y - y_min, PUMPKIN,
+              ORIGINE_X + x_max, ORIGINE_Y - y_max, PUMPKIN, 2)
   end
 
   def take_data
@@ -102,18 +129,39 @@ class Tutorial < Gosu::Window
     return args
   end
 
+  def determine_thetas
+    @index += 1
+    @index = @file_visu.count - 1 if @index > @file_visu.count - 1
+    tmp = @file_visu[@index].split(';')
+    @theta0 = tmp[0].to_f
+    @theta1 = tmp[1].to_f
+    @n = tmp[2].to_i
+  end
+
   def determine_args
-    if File.exist?('result.txt')
+    if File.exist?('visualisateur.txt')
+      @visualisateur = 1
+      @file_visu = open('visualisateur.txt').read.split("\n")
+      tmp = @file_visu[0].split(';')
+      theta0 = 0
+      theta1 = 0
+      min = tmp[3].to_f
+      max = tmp[4].to_f
+      n = 0
+    elsif File.exist?('result.txt')
+      @visualisateur = 0
       args = open('result.txt').read.split(';')
+      theta0 = args[0].to_f
+      theta1 = args[1].to_f
+      n = args[2].to_f
+      min = args[3].to_f
+      max = args[4].to_f
     else
       return
     end
-    theta0 = args[0].to_f
-    theta1 = args[1].to_f
-    min = args[3].to_f
-    max = args[4].to_f
-    return theta0, theta1, min, max
+
+    return theta0, theta1, min, max, n
   end
 end
 
-Tutorial.new.show
+Tutorial.new(ARGV).show
