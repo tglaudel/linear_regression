@@ -1,6 +1,7 @@
 # linear regression
 
 visualisateur => Gosu https://github.com/gosu/gosu/wiki/ruby-tutorial
+
 algo => gradient descent
 
 Project:
